@@ -469,17 +469,17 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "polars"
-version = "0.19.16"
+version = "0.19.19"
 description = "Blazingly fast DataFrame library"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "polars-0.19.16-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:26721e8f47bc2ae49face1a850fee4f57a63cd5860a24ed6ecdd19390db85e77"},
-    {file = "polars-0.19.16-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:78f8865b3d86f05e090b5cb6d9b5d5c54e2760aac25224b699fefbbdc33f56ae"},
-    {file = "polars-0.19.16-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1e2912a0e29e93dcf7f182ef33beb34524b314a40811e392c0340f24ace2a6da"},
-    {file = "polars-0.19.16-cp38-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:7b8ab060ee8b02f58a20be9f8f23ccad8380f5644fb8ee4ab1e0be02b700a102"},
-    {file = "polars-0.19.16-cp38-abi3-win_amd64.whl", hash = "sha256:998b60f2509d48874b0ccf9099838ca29aae2057f7a8af612e4f5f18ad409caf"},
-    {file = "polars-0.19.16.tar.gz", hash = "sha256:2535bd62065ceb41a486436e5b3120d2441da4db93be5e9e446be8f3e333f72e"},
+    {file = "polars-0.19.19-cp38-abi3-macosx_10_12_x86_64.whl", hash = "sha256:812dbb0cc7027fd41ce6b3eaf100b94828fc082fab026409d48792e3e7014095"},
+    {file = "polars-0.19.19-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:21a334e18c83a259211ca6ec182498f3a89297fde9b8f75021c6881ff4411201"},
+    {file = "polars-0.19.19-cp38-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d383fac392b08a6d5830c99f6e735a48e390c1535c8f1e67707fcaab6863ade5"},
+    {file = "polars-0.19.19-cp38-abi3-manylinux_2_24_aarch64.whl", hash = "sha256:eec0e72dce84b85c427bbf395d2e181f33e60677695b95ee2e87fed51043bdea"},
+    {file = "polars-0.19.19-cp38-abi3-win_amd64.whl", hash = "sha256:6c9e597efac74f00ef9cdfd9ba8a9128ed24276916bd3d60adc6e604530e4b37"},
+    {file = "polars-0.19.19.tar.gz", hash = "sha256:3e904d197aabf36e37fda263470eaf51ec92fb865cdea4f93947713480199303"},
 ]
 
 [package.extras]
@@ -520,6 +520,17 @@ identify = ">=1.0.0"
 nodeenv = ">=0.11.1"
 pyyaml = ">=5.1"
 virtualenv = ">=20.10.0"
+
+[[package]]
+name = "pulp"
+version = "2.7.0"
+description = "PuLP is an LP modeler written in python. PuLP can generate MPS or LP files and call GLPK, COIN CLP/CBC, CPLEX, and GUROBI to solve linear problems."
+optional = false
+python-versions = "*"
+files = [
+    {file = "PuLP-2.7.0-py3-none-any.whl", hash = "sha256:b6de42c929e80325bf44cc7a2997f02535440800c376b9eb8cb7b4670ed53769"},
+    {file = "PuLP-2.7.0.tar.gz", hash = "sha256:e73ee6b32d639c9b8cf4b4aded334ba158be5f8313544e056f796ace0a10ae63"},
+]
 
 [[package]]
 name = "pytest"
@@ -685,13 +696,13 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "virtualenv"
-version = "20.24.7"
+version = "20.25.0"
 description = "Virtual Python Environment builder"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "virtualenv-20.24.7-py3-none-any.whl", hash = "sha256:a18b3fd0314ca59a2e9f4b556819ed07183b3e9a3702ecfe213f593d44f7b3fd"},
-    {file = "virtualenv-20.24.7.tar.gz", hash = "sha256:69050ffb42419c91f6c1284a7b24e0475d793447e35929b488bf6a0aade39353"},
+    {file = "virtualenv-20.25.0-py3-none-any.whl", hash = "sha256:4238949c5ffe6876362d9c0180fc6c3a824a7b12b80604eeb8085f2ed7460de3"},
+    {file = "virtualenv-20.25.0.tar.gz", hash = "sha256:bf51c0d9c7dd63ea8e44086fa1e4fb1093a31e963b86959257378aef020e1f1b"},
 ]
 
 [package.dependencies]
@@ -706,4 +717,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.*"
-content-hash = "249c57c0333d3e1147f4d10fd3032565c3faecb1571e8f52747bdcd8ee3a4645"
+content-hash = "7b1b508ba34f416b5da32ad84765a78691a4caf10ce495df5f8045a4e0b35eb2"

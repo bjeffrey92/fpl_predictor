@@ -21,13 +21,14 @@ authors = ["Ben Jeffrey <bjeffrey92@hotmail.com>"]
 description = "FPL Predictor"
 name = "fpl_predictor"
 packages = [
-  {include = "fpl_predictor", from = "src"}
+  {include = "fpl_predictor"}
 ]
 version = "0.0.0"
 
 [tool.poetry.dependencies]
 jmespath = "^1.0.1"
 polars = "^0.19.16"
+pulp = "^2.7.0"
 python = "3.11.*"
 requests = "^2.31.0"
 
