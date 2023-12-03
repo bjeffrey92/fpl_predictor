@@ -1,4 +1,4 @@
-import requests  # type: ignore[import-untyped]
+import requests
 
 
 def get(url: str) -> dict | str:
