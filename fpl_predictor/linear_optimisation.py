@@ -67,10 +67,9 @@ class SquadOptimiser(_BaseOptimiser):
         current_squad: pl.DataFrame | None = None,
         n_substitutions: int | None = None,
     ) -> None:
-        super().__init__(player_data)
-
         self.current_squad = current_squad
         self.n_substitutions = n_substitutions
+        super().__init__(player_data)
 
     @property
     def cost_constraint(self) -> LinearConstraint | None:
@@ -104,9 +103,27 @@ class SquadOptimiser(_BaseOptimiser):
             position_encoded_data.transpose(), pos_requirements, pos_requirements
         )
 
+    @property
+    def current_team_constraint(self) -> LinearConstraint | None:
+        if self.current_squad is None:
+            return None
+        players_in_current_team = self.player_data["player_id"].is_in(
+            self.current_squad["player_id"]
+        )
+        current_team_encoded_data = players_in_current_team.cast(int).to_numpy()
+        return LinearConstraint(
+            current_team_encoded_data,
+            len(self.current_squad) - self.n_substitutions,  # type: ignore[operator]
+            len(self.current_squad),
+        )
+
     def get_constraints(self) -> list[LinearConstraint]:
         required_constraints = super().get_constraints()
-        return required_constraints + [self.cost_constraint, self.team_constraint]
+        return (
+            required_constraints
+            + [self.cost_constraint, self.team_constraint]
+            + ([self.current_team_constraint] if self.current_team_constraint else [])
+        )
 
 
 class StartingTeamOptimiser(_BaseOptimiser):
