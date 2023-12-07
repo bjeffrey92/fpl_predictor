@@ -1,60 +1,147 @@
+from abc import ABC, abstractproperty
+
 import numpy as np
 import polars as pl
 from scipy.optimize import Bounds, LinearConstraint, milp
 from sklearn.preprocessing import OneHotEncoder
 
-from fpl_predictor.player_stats import get_player_data, get_player_gameweek_stats
-
-n_selections = 15
-total_cost = 100
-gameweek = 1
-
-player_data = get_player_data()
-gw_stats = get_player_gameweek_stats(gameweek)
+from fpl_predictor.player_stats import load_player_gameweek_data
 
 
-player_data = player_data.join(gw_stats, on="player_id")
-player_data = player_data.with_columns((pl.col("cost_times_ten") / 10).alias("cost"))
+class _BaseOptimiser(ABC):
+    def __init__(self, player_data: pl.DataFrame) -> None:
+        self.player_data = player_data
+        self.n_players = player_data.shape[0]
 
-team_encoder = OneHotEncoder(sparse_output=False).fit(player_data.select("team_id"))
-position_encoder = OneHotEncoder(sparse_output=False).fit(
-    player_data.select("position")
-)
+        self.constraints = self.get_constraints()
 
-df = player_data
-vector_length = df.shape[0]
+    @abstractproperty
+    def n_selections(self) -> int:
+        pass
 
-team_encoding = team_encoder.transform(df.select("team_id"))
-position_encoding = position_encoder.transform(player_data.select("position"))
+    @abstractproperty
+    def position_max_selections(self) -> dict[str, int | None]:
+        pass
 
-position_constraints = {
-    "GKP": 2,
-    "DEF": 5,
-    "MID": 5,
-    "FWD": 3,
-}
-pos_requirements = np.array(
-    [position_constraints[pos] for pos in position_encoder.categories_[0]]
-)
+    @abstractproperty
+    def position_constraint(self) -> LinearConstraint:
+        pass
 
-cost_matrix = df.select("cost").to_numpy().squeeze()
-gw_points = df.select("gameweek_points").to_numpy().squeeze()
+    @abstractproperty
+    def cost_constraint(self) -> LinearConstraint | None:
+        pass
 
-constraints = [
-    LinearConstraint(cost_matrix, 0, total_cost),
-    LinearConstraint(team_encoding.transpose(), np.zeros(20), np.ones(20) * 3),
-    LinearConstraint(position_encoding.transpose(), pos_requirements, pos_requirements),
-    LinearConstraint(
-        np.ones(vector_length), n_selections, n_selections
-    ),  # ensure that n_selections are made
-]
+    @abstractproperty
+    def team_constraint(self) -> LinearConstraint | None:
+        pass
+
+    @property
+    def total_selections_constraint(self) -> LinearConstraint:
+        return LinearConstraint(
+            np.ones(self.n_players), self.n_selections, self.n_selections
+        )
+
+    def get_position_encoder(self) -> tuple[OneHotEncoder, np.ndarray]:
+        position_encoder = OneHotEncoder(sparse_output=False).fit(
+            self.player_data.select("position")
+        )
+        position_encoded_data = position_encoder.transform(
+            self.player_data.select("position")
+        )
+        return position_encoder, position_encoded_data
+
+    def get_constraints(self) -> list[LinearConstraint]:
+        required_constraints = [
+            self.position_constraint,
+            self.total_selections_constraint,
+        ]
+        optional_constraints = [
+            i for i in [self.cost_constraint, self.team_constraint] if i is not None
+        ]
+        return required_constraints + optional_constraints
+
+    def optimise(self) -> pl.DataFrame:
+        gw_points = self.player_data.select("gameweek_points").to_numpy().squeeze()
+        res = milp(
+            c=-gw_points,  # minimise negative gameweek points
+            constraints=self.constraints,
+            integrality=np.ones(self.n_players),  # all decision variables are integers
+            bounds=Bounds(0, 1),  # decision variable can be only one or zero
+        )
+        assert res.success, "Optimisation failed"
+        selections = np.round(res.x).astype(bool)
+        return self.player_data.filter(selections)
 
 
-res = milp(
-    c=-gw_points,  # minimise negative gameweek points
-    constraints=constraints,
-    integrality=np.ones(vector_length),  # all decision variables are integers
-    bounds=Bounds(0, 1),  # decision variable can be only one or zero
-)
-selections = np.round(res.x).astype(bool)
-df.filter(selections)
+class SquadOptimiser(_BaseOptimiser):
+    position_max_selections = {
+        "GKP": 2,
+        "DEF": 5,
+        "MID": 5,
+        "FWD": 3,
+    }
+    n_selections = 15
+    total_cost = 100
+
+    @property
+    def cost_constraint(self) -> LinearConstraint | None:
+        cost_matrix = self.player_data.select("cost").to_numpy().squeeze()
+        return LinearConstraint(cost_matrix, 0, self.total_cost)
+
+    @property
+    def team_constraint(self) -> LinearConstraint | None:
+        team_encoder = OneHotEncoder(sparse_output=False).fit(
+            self.player_data.select("team_id")
+        )
+        team_encoding = team_encoder.transform(self.player_data.select("team_id"))
+        n_teams = len(team_encoder.categories_[0])
+        return LinearConstraint(
+            team_encoding.transpose(), np.zeros(n_teams), np.ones(n_teams) * 3
+        )
+
+    @property
+    def position_constraint(self) -> LinearConstraint:
+        position_encoder, position_encoded_data = self.get_position_encoder()
+        pos_requirements = np.array(
+            [
+                self.position_max_selections[pos]
+                for pos in position_encoder.categories_[0]
+            ]
+        )
+        return LinearConstraint(
+            position_encoded_data.transpose(), pos_requirements, pos_requirements
+        )
+
+
+class StartingTeamOptimiser(_BaseOptimiser):
+    n_selections = 11
+    position_max_selections = {
+        "GKP": 1,
+        "DEF": 3,
+        "MID": n_selections - 5,
+        "FWD": 1,
+    }
+    cost_constraint = None
+    team_constraint = None
+
+    @property
+    def position_constraint(self) -> LinearConstraint:
+        position_encoder, position_encoded_data = self.get_position_encoder()
+        pos_requirements = np.array(
+            [
+                self.position_max_selections[pos]
+                for pos in position_encoder.categories_[0]
+            ]
+        )
+        return LinearConstraint(
+            position_encoded_data.transpose(),
+            np.zeros(len(pos_requirements)),
+            pos_requirements,
+        )
+
+
+if __name__ == "__main__":
+    player_data = load_player_gameweek_data(1)
+    squad_optimiser = SquadOptimiser(player_data)
+    best_squad = squad_optimiser.optimise()
+    starting_team_optimiser = StartingTeamOptimiser(best_squad)

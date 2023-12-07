@@ -26,3 +26,10 @@ def get_player_data() -> pl.DataFrame:
     player_data_df = pl.DataFrame(player_data)
     position_data_df = pl.DataFrame(position_data)
     return player_data_df.join(position_data_df, on="position_id")
+
+
+def load_player_gameweek_data(gameweek: int) -> pl.DataFrame:
+    gw_stats = get_player_gameweek_stats(gameweek)
+    raw_player_data = get_player_data()
+    player_data = raw_player_data.join(gw_stats, on="player_id")
+    return player_data.with_columns((pl.col("cost_times_ten") / 10).alias("cost"))
