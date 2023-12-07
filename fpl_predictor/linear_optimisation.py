@@ -20,19 +20,7 @@ class _BaseOptimiser(ABC):
         pass
 
     @abstractproperty
-    def position_max_selections(self) -> dict[str, int | None]:
-        pass
-
-    @abstractproperty
     def position_constraint(self) -> LinearConstraint:
-        pass
-
-    @abstractproperty
-    def cost_constraint(self) -> LinearConstraint | None:
-        pass
-
-    @abstractproperty
-    def team_constraint(self) -> LinearConstraint | None:
         pass
 
     @property
@@ -51,14 +39,10 @@ class _BaseOptimiser(ABC):
         return position_encoder, position_encoded_data
 
     def get_constraints(self) -> list[LinearConstraint]:
-        required_constraints = [
+        return [
             self.position_constraint,
             self.total_selections_constraint,
         ]
-        optional_constraints = [
-            i for i in [self.cost_constraint, self.team_constraint] if i is not None
-        ]
-        return required_constraints + optional_constraints
 
     def optimise(self) -> pl.DataFrame:
         gw_points = self.player_data.select("gameweek_points").to_numpy().squeeze()
@@ -74,14 +58,19 @@ class _BaseOptimiser(ABC):
 
 
 class SquadOptimiser(_BaseOptimiser):
-    position_max_selections = {
-        "GKP": 2,
-        "DEF": 5,
-        "MID": 5,
-        "FWD": 3,
-    }
     n_selections = 15
     total_cost = 100
+
+    def __init__(
+        self,
+        player_data: pl.DataFrame,
+        current_squad: pl.DataFrame | None = None,
+        n_substitutions: int | None = None,
+    ) -> None:
+        super().__init__(player_data)
+
+        self.current_squad = current_squad
+        self.n_substitutions = n_substitutions
 
     @property
     def cost_constraint(self) -> LinearConstraint | None:
@@ -101,42 +90,53 @@ class SquadOptimiser(_BaseOptimiser):
 
     @property
     def position_constraint(self) -> LinearConstraint:
+        position_max_selections = {
+            "GKP": 2,
+            "DEF": 5,
+            "MID": 5,
+            "FWD": 3,
+        }
         position_encoder, position_encoded_data = self.get_position_encoder()
         pos_requirements = np.array(
-            [
-                self.position_max_selections[pos]
-                for pos in position_encoder.categories_[0]
-            ]
+            [position_max_selections[pos] for pos in position_encoder.categories_[0]]
         )
         return LinearConstraint(
             position_encoded_data.transpose(), pos_requirements, pos_requirements
         )
 
+    def get_constraints(self) -> list[LinearConstraint]:
+        required_constraints = super().get_constraints()
+        return required_constraints + [self.cost_constraint, self.team_constraint]
+
 
 class StartingTeamOptimiser(_BaseOptimiser):
     n_selections = 11
-    position_max_selections = {
-        "GKP": 1,
-        "DEF": 3,
-        "MID": n_selections - 5,
-        "FWD": 1,
-    }
-    cost_constraint = None
-    team_constraint = None
 
     @property
     def position_constraint(self) -> LinearConstraint:
         position_encoder, position_encoded_data = self.get_position_encoder()
-        pos_requirements = np.array(
-            [
-                self.position_max_selections[pos]
-                for pos in position_encoder.categories_[0]
-            ]
+        position_min_selections = {
+            "GKP": 1,
+            "DEF": 3,
+            "MID": 0,
+            "FWD": 1,
+        }
+        position_max_selections = {
+            "GKP": 1,
+            "DEF": 5,
+            "MID": 5,
+            "FWD": 3,
+        }
+        min_pos_requirements = np.array(
+            [position_min_selections[pos] for pos in position_encoder.categories_[0]]
+        )
+        max_pos_requirements = np.array(
+            [position_max_selections[pos] for pos in position_encoder.categories_[0]]
         )
         return LinearConstraint(
             position_encoded_data.transpose(),
-            np.zeros(len(pos_requirements)),
-            pos_requirements,
+            min_pos_requirements,
+            max_pos_requirements,
         )
 
 
@@ -145,3 +145,4 @@ if __name__ == "__main__":
     squad_optimiser = SquadOptimiser(player_data)
     best_squad = squad_optimiser.optimise()
     starting_team_optimiser = StartingTeamOptimiser(best_squad)
+    starting_team = starting_team_optimiser.optimise()
