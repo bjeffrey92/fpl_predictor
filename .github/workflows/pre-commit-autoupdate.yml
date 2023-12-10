@@ -1,0 +1,25 @@
+name: pre-commit-autoupdate
+
+on:
+  schedule:
+  - cron: 0 0 * * FRI # every Friday at 00:00 UTC
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  pre-commit-autoupdate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - run: pip install pre-commit
+    - run: pre-commit autoupdate
+    - uses: peter-evans/create-pull-request@v5.0.2
+      with:
+        add-paths: .pre-commit-config.yaml
+        commit-message: 'chore(pre-commit): automatic update'
+        title: 'chore(pre-commit): automatic update'
+        body: Automatically run from .github/workflows/pre-commit-autoupdate.yml
