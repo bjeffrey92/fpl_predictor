@@ -1,0 +1,31 @@
+name: poetry-pytest
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.11
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+
+    - name: Install dependencies
+      run: poetry lock --check --no-update && poetry install --without=dev
+
+    - name: Build package
+      run: poetry build
+
+    - name: Run pytest
+      run: poetry run pytest -v --cov
