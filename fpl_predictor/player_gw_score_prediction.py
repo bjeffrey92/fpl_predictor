@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import polars as pl
 
-from .player_stats import get_player_gameweek_stats
+from fpl_predictor.player_stats import get_player_gameweek_stats
 
 
 class _BasePrediction(ABC):
@@ -13,7 +13,10 @@ class _BasePrediction(ABC):
 
 class MedianPastScore(_BasePrediction):
     def __init__(
-        self, upcoming_gameweek: int, n_previous_weeks: int, min_required_weeks: int
+        self,
+        upcoming_gameweek: int,
+        n_previous_weeks: int = 5,
+        min_required_weeks: int = 3,
     ) -> None:
         """
         Predicts player gameweek points as the median gameweek points recorded in past
@@ -50,3 +53,6 @@ class MedianPastScore(_BasePrediction):
 
     def predict_gw_scores(self) -> pl.DataFrame:
         return self.data.group_by("player_id").median()
+
+
+SCORE_PREDICTOR_FACTORY = {"median_past_score": MedianPastScore}
