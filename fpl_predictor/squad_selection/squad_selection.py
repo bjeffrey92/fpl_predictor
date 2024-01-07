@@ -2,9 +2,14 @@ from functools import cache
 
 import polars as pl
 
-from fpl_predictor.linear_optimisation import SquadOptimiser, StartingTeamOptimiser
-from fpl_predictor.player_gw_score_prediction import SCORE_PREDICTOR_FACTORY
 from fpl_predictor.player_stats import get_player_data
+from fpl_predictor.squad_selection.linear_optimisation import (
+    SquadOptimiser,
+    StartingTeamOptimiser,
+)
+from fpl_predictor.squad_selection.player_gw_score_prediction import (
+    SCORE_PREDICTOR_FACTORY,
+)
 
 
 @cache

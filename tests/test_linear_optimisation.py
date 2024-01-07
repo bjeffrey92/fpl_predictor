@@ -2,7 +2,10 @@ import polars as pl
 import pytest
 from polars.datatypes import Float64, Int32, Int64, Utf8
 
-from fpl_predictor.linear_optimisation import SquadOptimiser, StartingTeamOptimiser
+from fpl_predictor.squad_selection.linear_optimisation import (
+    SquadOptimiser,
+    StartingTeamOptimiser,
+)
 
 
 @pytest.fixture(scope="module")
