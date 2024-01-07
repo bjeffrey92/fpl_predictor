@@ -1,7 +1,7 @@
 import jmespath
 import polars as pl
 
-from .utils import get
+from fpl_predictor.utils import get
 
 
 def get_player_gameweek_stats(gameweek: int) -> pl.DataFrame:
