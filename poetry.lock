@@ -322,14 +322,17 @@ files = [
 
 [[package]]
 name = "isort"
-version = "5.13.1"
+version = "5.13.2"
 description = "A Python utility / library to sort Python imports."
 optional = false
 python-versions = ">=3.8.0"
 files = [
-    {file = "isort-5.13.1-py3-none-any.whl", hash = "sha256:56a51732c25f94ca96f6721be206dd96a95f42950502eb26c1015d333bc6edb7"},
-    {file = "isort-5.13.1.tar.gz", hash = "sha256:aaed790b463e8703fb1eddb831dfa8e8616bacde2c083bd557ef73c8189b7263"},
+    {file = "isort-5.13.2-py3-none-any.whl", hash = "sha256:8ca5e72a8d85860d5a3fa69b8745237f2939afe12dbf656afbcb47fe72d947a6"},
+    {file = "isort-5.13.2.tar.gz", hash = "sha256:48fdfcb9face5d58a4f6dde2e72a1fb8dcaf8ab26f95ab49fab84c2ddefb0109"},
 ]
+
+[package.extras]
+colors = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "jmespath"
@@ -871,4 +874,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.*"
-content-hash = "196e9af855f9f3fac630d28b98978143f8d66e385ba641a72dc8881430af5e16"
+content-hash = "28aa5f11a928952748642b85962b1af3f81fb38e5e41423eccc450ce82d6ae9d"
