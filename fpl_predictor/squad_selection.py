@@ -23,7 +23,10 @@ def _get_player_data(gameweek: int, prediction_method: str, **kwargs) -> pl.Data
 
 
 def _annotate_squad_and_compute_points(
-    squad: pl.DataFrame, starting_team: pl.DataFrame, n_substitutions: int | None
+    squad: pl.DataFrame,
+    starting_team: pl.DataFrame,
+    n_transfers: int | None,
+    n_free_transfers: int,
 ) -> tuple[pl.DataFrame, int]:
     starting_team = starting_team.with_columns(pl.lit(True).alias("starting")).select(
         pl.col("player_id"), pl.col("starting")
@@ -38,11 +41,14 @@ def _annotate_squad_and_compute_points(
     )
 
     # captain's points are doubled
-    total_points = squad["gameweek_points"].sum() + squad["gameweek_points"][0]
-    if n_substitutions is not None and n_substitutions > 1:
+    total_points = (
+        squad.filter(squad["starting"])["gameweek_points"].sum()
+        + squad["gameweek_points"][0]
+    )
+    if n_transfers is not None and n_transfers > n_free_transfers:
         total_points -= (
-            n_substitutions - 1
-        ) * 4  # -4 points for each substitution beyond the first
+            n_transfers - n_free_transfers
+        ) * 4  # -4 points for each transfer which isn't a free transfer
 
     return squad, total_points
 
@@ -50,21 +56,25 @@ def _annotate_squad_and_compute_points(
 def _squad_and_predicted_score(
     gameweek: int,
     current_squad: pl.DataFrame | None = None,
-    n_substitutions: int | None = None,
+    n_transfers: int | None = None,
+    n_free_transfers: int = 1,
     prediction_method: str = "median_past_score",
     **kwargs
 ) -> tuple[pl.DataFrame, int]:
     player_data = _get_player_data(gameweek, prediction_method, **kwargs)
 
-    squad = SquadOptimiser(player_data, current_squad, n_substitutions).optimise()
+    squad = SquadOptimiser(player_data, current_squad, n_transfers).optimise()
     starting_team = StartingTeamOptimiser(squad).optimise()
-    return _annotate_squad_and_compute_points(squad, starting_team, n_substitutions)
+    return _annotate_squad_and_compute_points(
+        squad, starting_team, n_transfers, n_free_transfers
+    )
 
 
 def select_squad(
     gameweek: int,
     *,
     current_squad: pl.DataFrame | None = None,
+    n_free_transfers: int = 1,
     prediction_method: str = "median_past_score",
     **kwargs
 ) -> tuple[pl.DataFrame, int]:
@@ -80,6 +90,7 @@ def select_squad(
                 gameweek,
                 current_squad,
                 n,
+                n_free_transfers,
                 prediction_method=prediction_method,
                 **kwargs
             )
