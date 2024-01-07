@@ -36,7 +36,7 @@ scipy = "^1.11.4"
 [tool.poetry.group.dev.dependencies]
 black = "^23.12.1"
 isort = "^5.13.1"
-mypy = "^1.5.1"
+mypy = "^1.8.0"
 pre-commit = "^3.4.0"
 
 [tool.poetry.group.test.dependencies]
