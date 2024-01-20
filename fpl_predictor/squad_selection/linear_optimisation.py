@@ -115,11 +115,42 @@ class SquadOptimiser(_BaseOptimiser):
             len(self.current_squad),
         )
 
+    @property
+    def starting_team_constraint(self) -> LinearConstraint:
+        position_encoder, position_encoded_data = self.get_position_encoder()
+        position_min_selections = {
+            "GKP": 1,
+            "DEF": 3,
+            "MID": 0,
+            "FWD": 1,
+        }
+        position_max_selections = {
+            "GKP": 2,
+            "DEF": 5,
+            "MID": 5,
+            "FWD": 3,
+        }
+        min_pos_requirements = np.array(
+            [position_min_selections[pos] for pos in position_encoder.categories_[0]]
+        )
+        max_pos_requirements = np.array(
+            [position_max_selections[pos] for pos in position_encoder.categories_[0]]
+        )
+        return LinearConstraint(
+            position_encoded_data.transpose(),
+            min_pos_requirements,
+            max_pos_requirements,
+        )
+
     def get_constraints(self) -> list[LinearConstraint]:
         required_constraints = super().get_constraints()
         return (
             required_constraints
-            + [self.cost_constraint, self.team_constraint]
+            + [
+                self.cost_constraint,
+                self.team_constraint,
+                self.starting_team_constraint,
+            ]
             + ([self.current_team_constraint] if self.current_team_constraint else [])
         )
 
