@@ -47,7 +47,7 @@ class MedianPastScore(_BasePrediction):
         players_to_consider = (
             df["player_id"]
             .value_counts()
-            .filter(pl.col("counts") > self.min_required_weeks)["player_id"]
+            .filter(pl.col("count") > self.min_required_weeks)["player_id"]
         )
         return df.filter(pl.col("player_id").is_in(players_to_consider))
 
