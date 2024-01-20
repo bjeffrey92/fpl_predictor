@@ -9,9 +9,10 @@ from sklearn.preprocessing import OneHotEncoder
 class _BaseOptimiser(ABC):
     def __init__(self, player_data: pl.DataFrame) -> None:
         self.player_data = player_data
-        self.n_players = player_data.shape[0]
 
-        self.constraints = self.get_constraints()
+    @property
+    def n_players(self) -> int:
+        return self.player_data.shape[0]
 
     @abstractproperty
     def n_selections(self) -> int:
@@ -36,11 +37,15 @@ class _BaseOptimiser(ABC):
         )
         return position_encoder, position_encoded_data
 
-    def get_constraints(self) -> list[LinearConstraint]:
+    def _constraints(self) -> list[LinearConstraint]:
         return [
             self.position_constraint,
             self.total_selections_constraint,
         ]
+
+    @property
+    def constraints(self) -> list[LinearConstraint]:
+        return self._constraints()
 
     def optimise(self) -> pl.DataFrame:
         gw_points = self.player_data.select("gameweek_points").to_numpy().squeeze()
@@ -56,8 +61,14 @@ class _BaseOptimiser(ABC):
 
 
 class SquadOptimiser(_BaseOptimiser):
-    n_selections = 15
-    total_cost = 100
+    _n_selections = 15
+    _total_cost = 100.0
+    _position_max_selections = {
+        "GKP": 2,
+        "DEF": 5,
+        "MID": 5,
+        "FWD": 3,
+    }
 
     def __init__(
         self,
@@ -68,6 +79,30 @@ class SquadOptimiser(_BaseOptimiser):
         self.current_squad = current_squad
         self.n_substitutions = n_substitutions
         super().__init__(player_data)
+
+    @property
+    def n_selections(self) -> int:
+        return self._n_selections
+
+    @n_selections.setter
+    def n_selections(self, value: int) -> None:
+        self._n_selections = value
+
+    @property
+    def total_cost(self) -> float:
+        return self._total_cost
+
+    @total_cost.setter
+    def total_cost(self, value: float) -> None:
+        self._total_cost = value
+
+    @property
+    def position_max_selections(self) -> dict[str, int]:
+        return self._position_max_selections
+
+    @position_max_selections.setter
+    def position_max_selections(self, value: dict[str, int]) -> None:
+        self._position_max_selections = value
 
     @property
     def cost_constraint(self) -> LinearConstraint | None:
@@ -87,15 +122,12 @@ class SquadOptimiser(_BaseOptimiser):
 
     @property
     def position_constraint(self) -> LinearConstraint:
-        position_max_selections = {
-            "GKP": 2,
-            "DEF": 5,
-            "MID": 5,
-            "FWD": 3,
-        }
         position_encoder, position_encoded_data = self.get_position_encoder()
         pos_requirements = np.array(
-            [position_max_selections[pos] for pos in position_encoder.categories_[0]]
+            [
+                self.position_max_selections[pos]
+                for pos in position_encoder.categories_[0]
+            ]
         )
         return LinearConstraint(
             position_encoded_data.transpose(), pos_requirements, pos_requirements
@@ -115,11 +147,14 @@ class SquadOptimiser(_BaseOptimiser):
             len(self.current_squad),
         )
 
-    def get_constraints(self) -> list[LinearConstraint]:
-        required_constraints = super().get_constraints()
+    def _constraints(self) -> list[LinearConstraint]:
+        required_constraints = super()._constraints()
         return (
             required_constraints
-            + [self.cost_constraint, self.team_constraint]
+            + [
+                self.cost_constraint,
+                self.team_constraint,
+            ]
             + ([self.current_team_constraint] if self.current_team_constraint else [])
         )
 
@@ -153,3 +188,56 @@ class StartingTeamOptimiser(_BaseOptimiser):
             min_pos_requirements,
             max_pos_requirements,
         )
+
+
+class PSCPSquadOptimiser(SquadOptimiser):
+    def __init__(
+        self,
+        player_data: pl.DataFrame,
+        current_squad: pl.DataFrame | None = None,
+        n_substitutions: int | None = None,
+    ) -> None:
+        super().__init__(player_data, current_squad, n_substitutions)
+        self._preselect_cheapest_players()
+
+    def _preselect_cheapest_players(self) -> None:
+        """
+        Selects 4 cheapest players to be named in the squad but not the starting team.
+        Must be within the position constraints.
+        """
+        max_selections = {
+            "GKP": 1,
+            "DEF": 2,
+            "MID": 5,
+            "FWD": 2,
+        }  # max number of players in each position that can be selected but not named in the starting team
+
+        selected_player_positions = {pos: 0 for pos in max_selections}
+        players_by_cost = self.player_data.sort("cost")
+        selected_players = [None for _ in range(4)]
+        i = 0
+        for row in players_by_cost.iter_rows(named=True):
+            position = row["position"]
+            if selected_player_positions[position] < max_selections[position]:
+                selected_player_positions[position] += 1
+                selected_players[i] = row  # type: ignore[call-overload]
+                i += 1
+            if i == 4:
+                break
+
+        self.selected_players = pl.DataFrame(selected_players, self.player_data.schema)
+        self._update_constraints()
+
+    def _update_constraints(self) -> None:
+        self.total_cost = self.total_cost - self.selected_players["cost"].sum()
+        self.n_selections = self.n_selections - len(self.selected_players)
+        selected_positions = self.selected_players["position"].value_counts()
+        for pos, count in selected_positions.iter_rows():
+            self.position_max_selections[pos] -= count
+        self.player_data = self.player_data.filter(
+            ~self.player_data["player_id"].is_in(self.selected_players["player_id"])
+        )
+
+    def optimise(self) -> pl.DataFrame:
+        df = super().optimise()
+        return pl.concat([df, self.selected_players])
