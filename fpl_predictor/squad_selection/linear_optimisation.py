@@ -1,4 +1,4 @@
-from abc import ABC, abstractproperty
+from abc import ABC, abstractmethod
 
 import numpy as np
 import polars as pl
@@ -14,11 +14,13 @@ class _BaseOptimiser(ABC):
     def n_players(self) -> int:
         return self.player_data.shape[0]
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def n_selections(self) -> int:
         pass
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def position_constraint(self) -> LinearConstraint:
         pass
 
