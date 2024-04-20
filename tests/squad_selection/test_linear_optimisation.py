@@ -3,6 +3,7 @@ import pytest
 from polars.datatypes import Float64, Int32, Int64, Utf8
 
 from fpl_predictor.squad_selection.linear_optimisation import (
+    PSCPSquadOptimiser,
     SquadOptimiser,
     StartingTeamOptimiser,
 )
@@ -126,3 +127,26 @@ def test_starting_team_optimiser(current_squad: pl.DataFrame) -> None:
         assert (
             player_position_counts[position] <= position_max_selections[position]
         ), f"Too many {position}s selected"
+
+
+def test_pscp_squad_optimiser(player_data: pl.DataFrame) -> None:
+    pscp_squad_optimiser = PSCPSquadOptimiser(
+        player_data,
+        players_to_preselect=4,
+        teams_to_exclude_from_preselection=tuple(range(1, 19)),
+    )
+    assert pscp_squad_optimiser.selected_players["team_id"].is_in((19, 20)).all()
+    assert (
+        pscp_squad_optimiser.total_cost
+        + pscp_squad_optimiser.selected_players["cost"].sum()
+        == 100
+    )
+    assert pscp_squad_optimiser.n_selections == 11
+    for pos, df in pscp_squad_optimiser.selected_players.group_by(["position"]):
+        position: str = pos[0]  # type: ignore[index]
+        assert (
+            pscp_squad_optimiser.position_max_selections[position] + df.shape[0]
+            == SquadOptimiser._position_max_selections[position]
+        )
+    df = pscp_squad_optimiser.optimise()
+    assert df.shape[0] == 15

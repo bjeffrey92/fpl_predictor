@@ -1,9 +1,20 @@
+import copy
 from abc import ABC, abstractmethod
+from typing import Final
 
 import numpy as np
 import polars as pl
 from scipy.optimize import Bounds, LinearConstraint, milp
 from sklearn.preprocessing import OneHotEncoder
+
+N_SELECTIONS: Final[int] = 15
+TOTAL_COST: Final[float] = 100.0
+POSITION_MAX_SELECTIONS: Final[dict[str, int]] = {
+    "GKP": 2,
+    "DEF": 5,
+    "MID": 5,
+    "FWD": 3,
+}
 
 
 class _BaseOptimiser(ABC):
@@ -63,14 +74,9 @@ class _BaseOptimiser(ABC):
 
 
 class SquadOptimiser(_BaseOptimiser):
-    _n_selections = 15
-    _total_cost = 100.0
-    _position_max_selections = {
-        "GKP": 2,
-        "DEF": 5,
-        "MID": 5,
-        "FWD": 3,
-    }
+    _n_selections = N_SELECTIONS
+    _total_cost = TOTAL_COST
+    _position_max_selections = copy.deepcopy(POSITION_MAX_SELECTIONS)
 
     def __init__(
         self,
@@ -100,7 +106,7 @@ class SquadOptimiser(_BaseOptimiser):
 
     @property
     def position_max_selections(self) -> dict[str, int]:
-        return self._position_max_selections
+        return self._position_max_selections.copy()
 
     @position_max_selections.setter
     def position_max_selections(self, value: dict[str, int]) -> None:
@@ -197,7 +203,7 @@ class PSCPSquadOptimiser(SquadOptimiser):
         self,
         player_data: pl.DataFrame,
         players_to_preselect: int = 4,
-        teams_to_exclude_from_preselection: tuple[str, ...] = (),
+        teams_to_exclude_from_preselection: tuple[int, ...] = (),
         current_squad: pl.DataFrame | None = None,
         n_substitutions: int | None = None,
     ) -> None:
