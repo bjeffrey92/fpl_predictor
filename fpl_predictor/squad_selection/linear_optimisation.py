@@ -196,10 +196,14 @@ class PSCPSquadOptimiser(SquadOptimiser):
     def __init__(
         self,
         player_data: pl.DataFrame,
+        players_to_preselect: int = 4,
+        teams_to_exclude_from_preselection: tuple[str, ...] = (),
         current_squad: pl.DataFrame | None = None,
         n_substitutions: int | None = None,
     ) -> None:
         super().__init__(player_data, current_squad, n_substitutions)
+        self.players_to_preselect = players_to_preselect
+        self.teams_to_exclude_from_preselection = teams_to_exclude_from_preselection
         self._preselect_cheapest_players()
 
     def _preselect_cheapest_players(self) -> None:
@@ -215,8 +219,11 @@ class PSCPSquadOptimiser(SquadOptimiser):
         }  # max number of players in each position that can be selected but not named in the starting team
 
         selected_player_positions = {pos: 0 for pos in max_selections}
-        players_by_cost = self.player_data.sort("cost")
-        selected_players = [None for _ in range(4)]
+        df = self.player_data.filter(
+            ~self.player_data["team_id"].is_in(self.teams_to_exclude_from_preselection)
+        )
+        players_by_cost = df.sort("cost")
+        selected_players = [None for _ in range(self.players_to_preselect)]
         i = 0
         for row in players_by_cost.iter_rows(named=True):
             position = row["position"]
@@ -224,7 +231,7 @@ class PSCPSquadOptimiser(SquadOptimiser):
                 selected_player_positions[position] += 1
                 selected_players[i] = row  # type: ignore[call-overload]
                 i += 1
-            if i == 4:
+            if i == self.players_to_preselect:
                 break
 
         self.selected_players = pl.DataFrame(selected_players, self.player_data.schema)
@@ -232,7 +239,7 @@ class PSCPSquadOptimiser(SquadOptimiser):
 
     def _update_constraints(self) -> None:
         self.total_cost = self.total_cost - self.selected_players["cost"].sum()
-        self.n_selections = self.n_selections - len(self.selected_players)
+        self.n_selections -= self.players_to_preselect
         selected_positions = self.selected_players["position"].value_counts()
         for pos, count in selected_positions.iter_rows():
             self.position_max_selections[pos] -= count
