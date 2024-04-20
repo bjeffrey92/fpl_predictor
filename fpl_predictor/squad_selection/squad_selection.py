@@ -3,7 +3,9 @@ from functools import cache
 import polars as pl
 
 from fpl_predictor.player_stats import get_player_data
+from fpl_predictor.settings import N_WORST_TEAMS, SQUAD_SELECTION_METHOD
 from fpl_predictor.squad_selection.linear_optimisation import (
+    PSCPSquadOptimiser,
     SquadOptimiser,
     StartingTeamOptimiser,
 )
@@ -64,11 +66,30 @@ def _squad_and_predicted_score(
     n_transfers: int | None = None,
     n_free_transfers: int = 1,
     prediction_method: str = "median_past_score",
-    **kwargs
+    **kwargs,
 ) -> tuple[pl.DataFrame, int]:
     player_data = _get_player_data(gameweek, prediction_method, **kwargs)
 
-    squad = SquadOptimiser(player_data, current_squad, n_transfers).optimise()
+    if SQUAD_SELECTION_METHOD == "preselect_cheapest_players":
+        points_per_team = player_data.group_by("team_id").agg(
+            pl.col("gameweek_points").sum()
+        )
+        worst_teams = points_per_team.sort("gameweek_points").head(N_WORST_TEAMS)[
+            "team_id"
+        ]
+        squad = PSCPSquadOptimiser(
+            player_data,
+            teams_to_exclude_from_preselection=tuple(worst_teams),
+            current_squad=current_squad,
+            n_substitutions=n_transfers,
+        ).optimise()
+    elif SQUAD_SELECTION_METHOD == "naive":
+        squad = SquadOptimiser(
+            player_data, current_squad=current_squad, n_substitutions=n_transfers
+        ).optimise()
+    else:
+        raise ValueError(f"Invalid squad selection method")
+
     starting_team = StartingTeamOptimiser(squad).optimise()
     return _annotate_squad_and_compute_points(
         squad, starting_team, n_transfers, n_free_transfers
@@ -81,7 +102,7 @@ def select_squad(
     current_squad: pl.DataFrame | None = None,
     n_free_transfers: int = 1,
     prediction_method: str = "median_past_score",
-    **kwargs
+    **kwargs,
 ) -> tuple[pl.DataFrame, int]:
     if current_squad is None:
         return _squad_and_predicted_score(
@@ -97,7 +118,7 @@ def select_squad(
                 n,
                 n_free_transfers,
                 prediction_method=prediction_method,
-                **kwargs
+                **kwargs,
             )
             for n in range(1, 15)
         )
