@@ -1,4 +1,3 @@
-import copy
 from abc import ABC, abstractmethod
 from typing import Final
 
@@ -74,9 +73,9 @@ class _BaseOptimiser(ABC):
 
 
 class SquadOptimiser(_BaseOptimiser):
-    _n_selections = N_SELECTIONS
-    _total_cost = TOTAL_COST
-    _position_max_selections = copy.deepcopy(POSITION_MAX_SELECTIONS)
+    _n_selections: int = N_SELECTIONS
+    _total_cost: float = TOTAL_COST
+    _position_max_selections: dict[str, int] | None = None
 
     def __init__(
         self,
@@ -86,6 +85,7 @@ class SquadOptimiser(_BaseOptimiser):
     ) -> None:
         self.current_squad = current_squad
         self.n_substitutions = n_substitutions
+        self.position_max_selections = POSITION_MAX_SELECTIONS.copy()
         super().__init__(player_data)
 
     @property
@@ -106,7 +106,7 @@ class SquadOptimiser(_BaseOptimiser):
 
     @property
     def position_max_selections(self) -> dict[str, int]:
-        return self._position_max_selections.copy()
+        return self._position_max_selections  # type: ignore[return-value]
 
     @position_max_selections.setter
     def position_max_selections(self, value: dict[str, int]) -> None:
