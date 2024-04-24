@@ -3,6 +3,7 @@ import pytest
 from polars.datatypes import Float64, Int32, Int64, Utf8
 
 from fpl_predictor.squad_selection.linear_optimisation import (
+    POSITION_MAX_SELECTIONS,
     PSCPSquadOptimiser,
     SquadOptimiser,
     StartingTeamOptimiser,
@@ -146,7 +147,7 @@ def test_pscp_squad_optimiser(player_data: pl.DataFrame) -> None:
         position: str = pos[0]  # type: ignore[index]
         assert (
             pscp_squad_optimiser.position_max_selections[position] + df.shape[0]
-            == SquadOptimiser._position_max_selections[position]
+            == POSITION_MAX_SELECTIONS[position]
         )
     df = pscp_squad_optimiser.optimise()
     assert df.shape[0] == 15
