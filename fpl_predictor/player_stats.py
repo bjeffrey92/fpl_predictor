@@ -1,4 +1,5 @@
 from functools import cache
+from typing import cast
 
 import jmespath
 import polars as pl
@@ -6,14 +7,31 @@ import polars as pl
 from fpl_predictor.utils import get
 
 
-def get_player_gameweek_stats(gameweek: int) -> pl.DataFrame:
+def get_player_gameweek_stats(
+    gameweek: int, cols: list[str] | None = None
+) -> pl.DataFrame:
     url = f"https://fantasy.premierleague.com/api/event/{gameweek}/live/"
     data = get(url)
+    search_pattern = "elements[*].{player_id: id, minutes: stats.minutes, goals_scored: stats.goals_scored, \
+        assists: stats.assists, clean_sheets: stats.clean_sheets, goals_conceded: stats.goals_conceded, \
+        own_goals: stats.own_goals, penalties_saved: stats.penalties_saved, penalties_missed: stats.penalties_missed, \
+        yellow_cards: stats.yellow_cards, red_cards: stats.red_cards, saves: stats.saves, bonus: stats.bonus, \
+        bps: stats.bps, influence: stats.influence, creativity: stats.creativity, threat: stats.threat, \
+        ict_index: stats.ict_index, starts: stats.starts, expected_goals: stats.expected_goals, \
+        expected_assists: stats.expected_assists, expected_goal_involvements: stats.expected_goal_involvements, \
+        expected_goals_conceded: stats.expected_goals_conceded, total_points: stats.total_points}"
     player_gw_stats = jmespath.search(
-        "elements[*].{player_id: id, gameweek_points: stats.total_points}", data
+        search_pattern,
+        data,
     )
     player_gw_stats_df = pl.DataFrame(player_gw_stats)
-    return player_gw_stats_df.with_columns(pl.lit(gameweek).alias("gameweek"))
+    player_gw_stats_df = player_gw_stats_df.rename({"total_points": "gameweek_points"})
+    player_gw_stats_df = player_gw_stats_df.with_columns(
+        pl.lit(gameweek).alias("gameweek")
+    )
+    if cols:
+        return player_gw_stats_df.select(cols)
+    return player_gw_stats_df
 
 
 @cache
@@ -29,6 +47,11 @@ def get_player_data() -> pl.DataFrame:
     player_data_df = pl.DataFrame(player_data)
     position_data_df = pl.DataFrame(position_data)
     return player_data_df.join(position_data_df, on="position_id")
+
+
+def get_fixtures() -> list[dict]:
+    data = cast(list[dict], get("https://fantasy.premierleague.com/api/fixtures/"))
+    return data
 
 
 def load_player_gameweek_data(gameweek: int) -> pl.DataFrame:

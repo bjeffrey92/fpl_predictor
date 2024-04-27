@@ -18,7 +18,9 @@ def test_player_gameweek_stats() -> None:
                 {"id": 2, "stats": {"total_points": 3}},
             ]
         }
-        player_gw_stats = get_player_gameweek_stats(1)
+        player_gw_stats = get_player_gameweek_stats(
+            1, cols=["player_id", "gameweek", "gameweek_points"]
+        )
         assert player_gw_stats.columns == ["player_id", "gameweek_points", "gameweek"]
         assert player_gw_stats.dtypes == [Int64, Int64, Int32]
         assert player_gw_stats.shape == (2, 3)

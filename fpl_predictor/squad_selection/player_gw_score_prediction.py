@@ -37,7 +37,9 @@ class MedianPastScore(_BasePrediction):
     def _get_data(self) -> pl.DataFrame:
         df = pl.concat(
             [
-                get_player_gameweek_stats(i).drop("gameweek")
+                get_player_gameweek_stats(
+                    i, cols=["player_id", "gameweek", "gameweek_points"]
+                ).drop("gameweek")
                 for i in range(
                     self.upcoming_gameweek - self.n_previous_weeks,
                     self.upcoming_gameweek,
