@@ -1,3 +1,5 @@
+from functools import cache
+
 import jmespath
 import polars as pl
 
@@ -14,6 +16,7 @@ def get_player_gameweek_stats(gameweek: int) -> pl.DataFrame:
     return player_gw_stats_df.with_columns(pl.lit(gameweek).alias("gameweek"))
 
 
+@cache
 def get_player_data() -> pl.DataFrame:
     data = get("https://fantasy.premierleague.com/api/bootstrap-static/")
     player_data = jmespath.search(
