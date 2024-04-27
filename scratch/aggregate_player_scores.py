@@ -9,7 +9,10 @@ n_selections = 15
 total_cost = 100
 
 player_data = get_player_data()
-all_gw_stats = [get_player_gameweek_stats(i) for i in range(1, 14)]
+all_gw_stats = [
+    get_player_gameweek_stats(i, cols=["player_id", "gameweek", "gameweek_points"])
+    for i in range(1, 14)
+]
 all_gw_stats_df = pl.concat(all_gw_stats)
 
 all_points_per_player = all_gw_stats_df.group_by("player_id").agg(
