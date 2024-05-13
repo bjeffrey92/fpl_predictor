@@ -27,7 +27,7 @@ version = "0.0.0"
 
 [tool.poetry.dependencies]
 jmespath = "^1.0.1"
-polars = "^0.20.16"
+polars = "^0.20.25"
 python = "3.11.*"
 python-decouple = "^3.8"
 requests = "^2.31.0"
