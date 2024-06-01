@@ -38,7 +38,7 @@ scipy = "^1.13.0"
 black = "^24.3.0"
 isort = "^5.13.2"
 mypy = "^1.8.0"
-pre-commit = "^3.4.0"
+pre-commit = "^3.7.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.1.1"
