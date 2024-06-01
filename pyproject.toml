@@ -30,7 +30,7 @@ jmespath = "^1.0.1"
 polars = "^0.20.30"
 python = "3.11.*"
 python-decouple = "^3.8"
-requests = "^2.31.0"
+requests = "^2.32.2"
 scikit-learn = "^1.5.0"
 scipy = "^1.13.0"
 
