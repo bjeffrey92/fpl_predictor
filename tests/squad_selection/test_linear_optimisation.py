@@ -14,7 +14,7 @@ from fpl_predictor.squad_selection.linear_optimisation import (
 def player_data() -> pl.DataFrame:
     return pl.read_csv(
         "tests/sample_data/player_data.csv",
-        dtypes={
+        schema={
             "player_id": Int64,
             "team_id": Int64,
             "position_id": Int64,
@@ -32,7 +32,7 @@ def player_data() -> pl.DataFrame:
 def current_squad() -> pl.DataFrame:
     return pl.read_csv(
         "tests/sample_data/sample_squad.csv",
-        dtypes={
+        schema={
             "player_id": Int64,
             "team_id": Int64,
             "position_id": Int64,

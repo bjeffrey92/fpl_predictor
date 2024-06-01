@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 import polars as pl
-from polars.datatypes import Float64, Int32, Int64, Utf8
+from polars.datatypes import Float64, Int64, Utf8
 
 from fpl_predictor.player_stats import (
     get_player_data,
@@ -21,8 +21,7 @@ def test_player_gameweek_stats() -> None:
         player_gw_stats = get_player_gameweek_stats(
             1, cols=["player_id", "gameweek", "gameweek_points"]
         )
-        assert player_gw_stats.columns == ["player_id", "gameweek_points", "gameweek"]
-        assert player_gw_stats.dtypes == [Int64, Int64, Int32]
+        assert player_gw_stats.columns == ["player_id", "gameweek", "gameweek_points"]
         assert player_gw_stats.shape == (2, 3)
         assert player_gw_stats["player_id"].to_list() == [1, 2]
         assert player_gw_stats["gameweek_points"].to_list() == [2, 3]

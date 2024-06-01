@@ -6,7 +6,9 @@ from fpl_predictor.squad_selection.player_gw_score_prediction import MedianPastS
 
 
 def test_median_past_score() -> None:
-    def mock_get_player_gameweek_stats(upcoming_gameweek: int) -> pl.DataFrame:
+    def mock_get_player_gameweek_stats(
+        upcoming_gameweek: int, cols: list[str]
+    ) -> pl.DataFrame:
         if upcoming_gameweek == 6:
             return pl.DataFrame({"player_id": [1, 2, 3], "points": [2, 6, 7]})
         else:
