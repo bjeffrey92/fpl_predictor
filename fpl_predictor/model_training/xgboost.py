@@ -61,6 +61,11 @@ def optimise_hyperparameters(
     return best_model
 
 
-def main():
-    data = load_data(n_prediction_weeks=2)
-    optimise_hyperparameters(data.train_X, data.train_y, data.val_X, data.val_y)
+def main(  # pragma: no cover
+    n_prediction_weeks: int = 2,
+) -> tuple[float, xgb.XGBRegressor]:
+    data = load_data(n_prediction_weeks=n_prediction_weeks)
+    model = optimise_hyperparameters(data.train_X, data.train_y, data.val_X, data.val_y)
+    test_preds = model.predict(data.test_X)
+    mse = mean_squared_error(data.test_y, test_preds)
+    return mse, model
