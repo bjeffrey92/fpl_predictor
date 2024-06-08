@@ -131,11 +131,15 @@ def _train_test_val_split(data: pl.DataFrame, test_frac: float, val_frac: float)
     )
 
     return TrainTestValData(
-        train_X=train_data.drop("gameweek_points"),
+        train_X=train_data.drop(
+            "gameweek_points", "player_id", "team_id", "prediction_gw"
+        ),
         train_y=train_data["gameweek_points"],
-        test_X=test_data.drop("gameweek_points"),
+        test_X=test_data.drop(
+            "gameweek_points", "player_id", "team_id", "prediction_gw"
+        ),
         test_y=test_data["gameweek_points"],
-        val_X=val_data.drop("gameweek_points"),
+        val_X=val_data.drop("gameweek_points", "player_id", "team_id", "prediction_gw"),
         val_y=val_data["gameweek_points"],
     )
 

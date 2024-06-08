@@ -1,11 +1,15 @@
 from functools import partial
+from typing import Callable
 
 import polars as pl
 import xgboost as xgb
 from bayes_opt import BayesianOptimization
 from sklearn.metrics import mean_squared_error
 
-from fpl_predictor.model_training.load_data import load_data
+from fpl_predictor.model_training.load_23_24_season_data import TrainTestValData
+from fpl_predictor.model_training.load_23_24_season_data import (
+    load_data as load_23_24_data,
+)
 
 
 def train(X: pl.DataFrame, y: pl.Series, **kwargs) -> xgb.XGBRegressor:
@@ -63,8 +67,9 @@ def optimise_hyperparameters(
 
 def main(  # pragma: no cover
     n_prediction_weeks: int = 2,
+    load_data: Callable[[int], TrainTestValData] = load_23_24_data,
 ) -> tuple[float, xgb.XGBRegressor]:
-    data = load_data(n_prediction_weeks=n_prediction_weeks)
+    data = load_data(n_prediction_weeks)
     model = optimise_hyperparameters(data.train_X, data.train_y, data.val_X, data.val_y)
     test_preds = model.predict(data.test_X)
     mse = mean_squared_error(data.test_y, test_preds)
