@@ -30,6 +30,7 @@ bayesian-optimization = "^1.5.1"
 boto3 = "^1.1.1"
 fsspec = "^2022.1.0"
 jmespath = "^1.0.1"
+joblib = "^1.4.2"
 polars = "^0.20.30"
 python = "3.11.*"
 python-decouple = "^3.8"
@@ -42,8 +43,10 @@ xgboost = "^2.1.0"
 [tool.poetry.group.dev.dependencies]
 black = "^24.3.0"
 isort = "^5.13.2"
+matplotlib = "^3.9.0"
 mypy = "^1.8.0"
 pre-commit = "^3.4.0"
+shap = "^0.45.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.2.2"
