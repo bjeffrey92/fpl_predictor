@@ -26,7 +26,7 @@ packages = [
 version = "0.0.0"
 
 [tool.poetry.dependencies]
-bayesian-optimization = "^1.4.3"
+bayesian-optimization = "^1.5.0"
 boto3 = "^1.1.1"
 fsspec = "^2022.1.0"
 jmespath = "^1.0.1"
