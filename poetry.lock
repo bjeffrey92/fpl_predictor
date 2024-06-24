@@ -162,20 +162,20 @@ tests-no-zope = ["attrs[tests-mypy]", "cloudpickle", "hypothesis", "pympler", "p
 
 [[package]]
 name = "bayesian-optimization"
-version = "1.4.3"
+version = "1.5.0"
 description = "Bayesian Optimization package"
 optional = false
-python-versions = ">= 3.7"
+python-versions = "<4.0,>=3.9"
 files = [
-    {file = "bayesian-optimization-1.4.3.tar.gz", hash = "sha256:f9a448e1b52d961301cbc953ce4199709f6c26b1c88994c9b4dadb7752a64550"},
-    {file = "bayesian_optimization-1.4.3-py3-none-any.whl", hash = "sha256:2719272d5825f1ba7d7609f3b1c1fdca13eba1b7ad52a5ca2e62f34154ecae28"},
+    {file = "bayesian_optimization-1.5.0-py3-none-any.whl", hash = "sha256:98554b722ae89709c5b26578209ff5f1425e5a6fd70187bca8db78259a07ae9d"},
+    {file = "bayesian_optimization-1.5.0.tar.gz", hash = "sha256:d93163709f1861d2343ff66182a4b0cf0ce2d3d2929818becdec7bf78a96acbf"},
 ]
 
 [package.dependencies]
-colorama = ">=0.4.6"
-numpy = ">=1.9.0"
-scikit-learn = ">=0.18.0"
-scipy = ">=1.0.0"
+colorama = ">=0.4.6,<0.5.0"
+numpy = ">=1.9.0,<2.0.0"
+scikit-learn = ">=1.0.0,<2.0.0"
+scipy = ">=1.0.0,<2.0.0"
 
 [[package]]
 name = "black"
@@ -1573,4 +1573,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "3.11.*"
-content-hash = "3a5aa60aa0c37fee5412582927ba12d28f03f7ded31800c6b7ada9419a8a58b4"
+content-hash = "37ae5f820aa3a3d25259922679333c987c051bffbf34a57511bd0c4580cbd10f"
