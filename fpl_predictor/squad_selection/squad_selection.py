@@ -38,7 +38,9 @@ def _annotate_squad_and_compute_points(
     starting_team = starting_team.with_columns(pl.lit(True).alias("starting")).select(
         pl.col("player_id"), pl.col("starting")
     )
-    squad = squad.join(starting_team, on="player_id", how="left").fill_null(False)
+    squad = squad.join(
+        starting_team, on="player_id", how="left", coalesce=True
+    ).fill_null(False)
     squad = squad.sort(["starting", "gameweek_points"], descending=[True, True])
     squad = squad.with_columns(
         pl.Series(
