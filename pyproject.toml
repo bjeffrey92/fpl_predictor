@@ -46,7 +46,7 @@ isort = "^5.13.2"
 matplotlib = "^3.9.0"
 mypy = "^1.8.0"
 pre-commit = "^3.4.0"
-shap = "^0.45.1"
+shap = "^0.46.0"
 
 [tool.poetry.group.test.dependencies]
 pytest = "^8.2.2"
