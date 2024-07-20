@@ -67,7 +67,7 @@ def test_annotate_squad_and_compute_points(
         }
     )
 
-    squad, total_points = squad_selection._annotate_squad_and_compute_points(
+    squad, total_points = squad_selection.annotate_squad_and_compute_points(
         mock_squad, player_data, n_transfers, n_free_transfers
     )
     expected_squad = pl.DataFrame(

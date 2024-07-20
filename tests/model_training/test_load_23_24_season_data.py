@@ -33,7 +33,7 @@ def test__load_data() -> None:
 
 def test_player_gameweek_stats() -> None:
     with mock.patch.object(load_23_24_season_data, "pl") as mock_pl:
-        response = load_23_24_season_data._player_gameweek_stats()
+        response = load_23_24_season_data.player_gameweek_stats()
         mock_pl.read_csv.assert_called_once_with(
             "s3://fpl-data/player_gameweek_stats_23-24.csv"
         )

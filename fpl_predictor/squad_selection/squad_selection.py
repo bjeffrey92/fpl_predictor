@@ -29,7 +29,7 @@ def _get_player_data(gameweek: int, prediction_method: str, **kwargs) -> pl.Data
     )
 
 
-def _annotate_squad_and_compute_points(
+def annotate_squad_and_compute_points(
     squad: pl.DataFrame,
     starting_team: pl.DataFrame,
     n_transfers: int | None,
@@ -93,7 +93,7 @@ def _squad_and_predicted_score(
         raise ValueError(f"Invalid squad selection method")
 
     starting_team = StartingTeamOptimiser(squad).optimise()
-    return _annotate_squad_and_compute_points(
+    return annotate_squad_and_compute_points(
         squad, starting_team, n_transfers, n_free_transfers
     )
 
