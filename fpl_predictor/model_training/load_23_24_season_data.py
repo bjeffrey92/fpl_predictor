@@ -26,8 +26,8 @@ def _load_data(key: str) -> str:
     return data["Body"].read().decode("utf-8")
 
 
-def _player_gameweek_stats() -> pl.DataFrame:
-    return pl.read_csv("s3://fpl-data/player_gameweek_stats_23-24.csv")
+def player_gameweek_stats(columns: list[str] | None = None) -> pl.DataFrame:
+    return pl.read_csv("s3://fpl-data/player_gameweek_stats_23-24.csv", columns=columns)
 
 
 def _fixtures() -> list[dict[str, object]]:
@@ -143,7 +143,7 @@ def _train_test_val_split(data: pl.DataFrame, test_frac: float, val_frac: float)
 def load_data(
     n_prediction_weeks: int, test_frac: float = 0.2, val_frac: float = 0.2
 ) -> TrainTestValData:
-    gw_stats = _player_gameweek_stats()
+    gw_stats = player_gameweek_stats()
     fixtures = _fixtures()
 
     @lru_cache
