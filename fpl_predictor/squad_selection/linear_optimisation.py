@@ -228,7 +228,7 @@ class PSCPSquadOptimiser(SquadOptimiser):
         df = self.player_data.filter(
             ~self.player_data["team_id"].is_in(self.teams_to_exclude_from_preselection)
         )
-        players_by_cost = df.sort("cost")
+        players_by_cost = df.sort(["cost", "gameweek_points"], descending=[False, True])
         selected_players = [None for _ in range(self.players_to_preselect)]
         i = 0
         for row in players_by_cost.iter_rows(named=True):
