@@ -9,6 +9,7 @@ from fpl_predictor.squad_selection.linear_optimisation import (
     SquadOptimiser,
     StartingTeamOptimiser,
 )
+from fpl_predictor.squad_selection.player_availability import get_unavailable_players
 from fpl_predictor.squad_selection.player_gw_score_prediction import (
     SCORE_PREDICTOR_FACTORY,
 )
@@ -19,7 +20,14 @@ def _get_player_data(gameweek: int, prediction_method: str, **kwargs) -> pl.Data
     predictor = SCORE_PREDICTOR_FACTORY[prediction_method]
     gw_predictions = predictor(gameweek, **kwargs).predict_gw_scores()
     player_data = get_player_data()
-    df = gw_predictions.join(player_data, on="player_id")
+    unavailable_players = get_unavailable_players()
+    available_player_data = player_data.join(
+        unavailable_players,
+        left_on=["team_short_name", "first_name"],
+        right_on=["team", "first_name"],
+        how="anti",
+    ).select(player_data.columns)
+    df = gw_predictions.join(available_player_data, on="player_id")
     return df.select(
         pl.col("player_id"),
         pl.col("team_id"),
