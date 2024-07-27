@@ -37,16 +37,23 @@ def get_player_gameweek_stats(
 @cache
 def get_player_data() -> pl.DataFrame:
     data = get("https://fantasy.premierleague.com/api/bootstrap-static/")
+
     player_data = jmespath.search(
-        "elements[*].{player_id: id, team_id: team, position_id: element_type, name: web_name, cost_times_ten: now_cost}",
+        "elements[*].{player_id: id, team_id: team, position_id: element_type, name: web_name, first_name: first_name, second_name: second_name, cost_times_ten: now_cost}",
         data,
+    )
+    team_data = jmespath.search(
+        "teams[*].{team_id: id, team: name, team_short_name: short_name}", data
     )
     position_data = jmespath.search(
         "element_types[*].{position_id: id, position: singular_name_short}", data
     )
     player_data_df = pl.DataFrame(player_data)
     position_data_df = pl.DataFrame(position_data)
-    return player_data_df.join(position_data_df, on="position_id")
+    team_data_df = pl.DataFrame(team_data)
+
+    df = player_data_df.join(position_data_df, on="position_id")
+    return df.join(team_data_df, on="team_id")
 
 
 def get_fixtures() -> list[dict]:
