@@ -35,7 +35,7 @@ def test_player_gameweek_stats() -> None:
     with mock.patch.object(load_23_24_season_data, "pl") as mock_pl:
         response = load_23_24_season_data.player_gameweek_stats()
         mock_pl.read_csv.assert_called_once_with(
-            "s3://fpl-data/player_gameweek_stats_23-24.csv"
+            "s3://fpl-data/player_gameweek_stats_23-24.csv", columns=None
         )
         assert response == mock_pl.read_csv.return_value
 
@@ -203,7 +203,7 @@ def gw_fixtures(fixtures_dir: Path) -> pl.DataFrame:
 
 def test_load_data(gw_stats: pl.DataFrame, gw_fixtures: pl.DataFrame) -> None:
     with mock.patch.object(
-        load_23_24_season_data, "_player_gameweek_stats", return_value=gw_stats
+        load_23_24_season_data, "player_gameweek_stats", return_value=gw_stats
     ), mock.patch.object(load_23_24_season_data, "_fixtures", return_value=gw_fixtures):
         response = load_23_24_season_data.load_data(1)
         assert isinstance(response, load_23_24_season_data.TrainTestValData)

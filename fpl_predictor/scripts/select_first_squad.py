@@ -9,17 +9,25 @@ from fpl_predictor import player_stats
 from fpl_predictor.model_training import load_23_24_season_data
 from fpl_predictor.settings import N_WORST_TEAMS
 from fpl_predictor.squad_selection import linear_optimisation, squad_selection
+from fpl_predictor.squad_selection.player_availability import get_unavailable_players
 
 
 def _prev_season_median_gw_points() -> pl.DataFrame:
     player_data = player_stats.get_player_data()
+    unavailable_players = get_unavailable_players()
+    available_player_data = player_data.join(
+        unavailable_players,
+        left_on=["team_short_name", "first_name"],
+        right_on=["team", "first_name"],
+        how="anti",
+    ).select(player_data.columns)
     previous_season_player_stats = load_23_24_season_data.player_gameweek_stats(
         columns=["name", "position_id", "team_id", "gameweek_points"]
     )
     median_points_gw_points = previous_season_player_stats.group_by(
         ["name", "position_id", "team_id"]
     ).median()
-    return player_data.join(
+    return available_player_data.join(
         median_points_gw_points, on=["name", "position_id", "team_id"]
     )
 
