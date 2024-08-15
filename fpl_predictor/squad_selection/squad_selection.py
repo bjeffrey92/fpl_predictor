@@ -23,8 +23,8 @@ def _get_player_data(gameweek: int, prediction_method: str, **kwargs) -> pl.Data
     unavailable_players = get_unavailable_players()
     available_player_data = player_data.join(
         unavailable_players,
-        left_on=["team_short_name", "first_name"],
-        right_on=["team", "first_name"],
+        left_on=["team_short_name", "first_name", "second_name"],
+        right_on=["team", "first_name", "second_name"],
         how="anti",
     ).select(player_data.columns)
     df = gw_predictions.join(available_player_data, on="player_id")

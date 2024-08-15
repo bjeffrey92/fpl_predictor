@@ -50,6 +50,10 @@ def test_get_player_data() -> None:
                 {"id": 1, "singular_name_short": "GKP"},
                 {"id": 2, "singular_name_short": "DEF"},
             ],
+            "teams": [
+                {"id": 1, "name": "Team 1", "short_name": "T1"},
+                {"id": 2, "name": "Team 2", "short_name": "T2"},
+            ],
         }
         player_data = get_player_data()
         assert player_data.columns == [
@@ -57,11 +61,14 @@ def test_get_player_data() -> None:
             "team_id",
             "position_id",
             "name",
+            "first_name",
+            "second_name",
             "cost_times_ten",
             "position",
+            "team",
+            "team_short_name",
         ]
-        assert player_data.dtypes == [Int64, Int64, Int64, Utf8, Int64, Utf8]
-        assert player_data.shape == (2, 6)
+        assert player_data.shape == (2, 10)
         assert player_data["player_id"].to_list() == [1, 2]
         assert player_data["team_id"].to_list() == [1, 2]
         assert player_data["position_id"].to_list() == [1, 2]
