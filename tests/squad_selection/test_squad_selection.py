@@ -6,35 +6,49 @@ import pytest
 from fpl_predictor.squad_selection import linear_optimisation, squad_selection
 
 
+@mock.patch("fpl_predictor.squad_selection.squad_selection.get_unavailable_players")
 @mock.patch("fpl_predictor.squad_selection.squad_selection.SCORE_PREDICTOR_FACTORY")
 @mock.patch("fpl_predictor.squad_selection.squad_selection.get_player_data")
 def test_get_player_data(
-    mock_get_player_data: mock.MagicMock, mock_score_predictor_factory: mock.MagicMock
+    mock_get_player_data: mock.MagicMock,
+    mock_score_predictor_factory: mock.MagicMock,
+    mock_get_unavailable_players: mock.MagicMock,
 ) -> None:
+    mock_unavailable_players = pl.DataFrame(
+        {
+            "first_name": ["foo"],
+            "second_name": ["bar"],
+            "team": ["A"],
+        }
+    )
     mock_gw_predictions = pl.DataFrame(
         {"player_id": [1, 2, 3], "gameweek_points": [5, 6, 7]}
     )
     mock_player_data = pl.DataFrame(
         {
             "player_id": [1, 2, 3],
+            "first_name": ["foo", "bar", "baz"],
+            "second_name": ["bar", "baz", "qux"],
             "team_id": [1, 2, 3],
+            "team_short_name": ["A", "B", "C"],
             "position": ["FWD", "MID", "DEF"],
             "cost_times_ten": [100, 200, 300],
         }
     )
     mock_predictor = mock.MagicMock()
     mock_predictor.predict_gw_scores.return_value = mock_gw_predictions
-    mock_score_predictor_factory.__getitem__.return_value = mock_predictor
+    mock_score_predictor_factory.__getitem__.return_value.return_value = mock_predictor
     mock_get_player_data.return_value = mock_player_data
+    mock_get_unavailable_players.return_value = mock_unavailable_players
 
     result = squad_selection._get_player_data(1, "method")
     expected_result = pl.DataFrame(
         {
-            "player_id": [1, 2, 3],
-            "team_id": [1, 2, 3],
-            "position": ["FWD", "MID", "DEF"],
-            "cost": [10.0, 20.0, 30.0],
-            "gameweek_points": [5, 6, 7],
+            "player_id": [2, 3],
+            "team_id": [2, 3],
+            "position": ["MID", "DEF"],
+            "cost": [20.0, 30.0],
+            "gameweek_points": [6, 7],
         }
     )
     assert result.frame_equal(expected_result)
@@ -97,7 +111,7 @@ def test_squad_and_predicted_score(squad_selection_method: str) -> None:
         "_get_player_data",
         return_value=pl.DataFrame({"team_id": [], "gameweek_points": []}),
     ) as mock_get_player_data, mock.patch.object(
-        squad_selection, "_annotate_squad_and_compute_points"
+        squad_selection, "annotate_squad_and_compute_points"
     ) as mock_annotate_squad_and_compute_points, mock.patch(
         "fpl_predictor.squad_selection.squad_selection.PSCPSquadOptimiser",
         mock_pscp_squad_optimiser,
