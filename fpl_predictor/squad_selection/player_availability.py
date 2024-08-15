@@ -5,6 +5,7 @@ import requests
 from bs4 import BeautifulSoup
 
 URL = "https://www.fantasyfootballscout.co.uk/fantasy-football-injuries/"
+RAISE_ON_ERROR = False
 
 
 def _parse_table_row(table_row) -> list[str]:
@@ -18,16 +19,20 @@ def _extract_player_first_name(full_name: str) -> str:
     match = re.search(r"\((.*?)\)", full_name)
     if match:
         return match.group(1)
-    else:
+    elif RAISE_ON_ERROR:
         raise RuntimeError(f"Could not extract player first name from {full_name=}")
+    else:
+        return ""
 
 
 def _extract_player_second_name(full_name: str) -> str:
     match = re.search(r"\s(.*?)\s\(", full_name)
     if match:
         return match.group(1).strip()
-    else:
+    elif RAISE_ON_ERROR:
         raise RuntimeError(f"Could not extract player last name from {full_name=}")
+    else:
+        return ""
 
 
 def get_unavailable_players():
