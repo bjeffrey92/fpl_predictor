@@ -45,7 +45,7 @@ black = "^24.3.0"
 isort = "^5.13.2"
 matplotlib = "^3.9.0"
 mypy = "^1.11.1"
-pre-commit = "^3.4.0"
+pre-commit = "^3.8.0"
 shap = "^0.46.0"
 
 [tool.poetry.group.test.dependencies]
