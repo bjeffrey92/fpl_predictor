@@ -1,5 +1,5 @@
 from functools import cache
-from typing import cast
+from typing import Iterable, cast
 
 import jmespath
 import polars as pl
@@ -8,7 +8,7 @@ from fpl_predictor.utils import get
 
 
 def get_player_gameweek_stats(
-    gameweek: int, cols: list[str] | None = None
+    gameweek: int, cols: Iterable[str] | None = None
 ) -> pl.DataFrame:
     url = f"https://fantasy.premierleague.com/api/event/{gameweek}/live/"
     data = get(url)

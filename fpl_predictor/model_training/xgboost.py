@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from functools import partial
 from typing import Callable
 
@@ -63,6 +64,12 @@ def optimise_hyperparameters(
     optimizer.maximize(init_points=init_points, n_iter=n_iter)
     best_model = train(train_X, train_y, **optimizer.max["params"])
     return best_model
+
+
+@dataclass
+class XGBoostPredictor:
+    model: xgb.XGBRegressor
+    prediction_columns: tuple[str]
 
 
 def main(  # pragma: no cover
