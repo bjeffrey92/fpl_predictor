@@ -1,0 +1,16 @@
+player_id,team_id,position_id,name,first_name,second_name,cost_times_ten,position,team,team_short_name
+554,20,1,José Sá,José,Malheiro de Sá,45,GKP,Wolves,WOL
+17,1,3,Saka,Bukayo,Saka,100,MID,Arsenal,ARS
+18,1,2,Saliba,William,Saliba,60,DEF,Arsenal,ARS
+24,1,2,White,Benjamin,White,65,DEF,Arsenal,ARS
+516,19,2,Coufal,Vladimír,Coufal,45,DEF,West Ham,WHU
+398,15,3,Gordon,Anthony,Gordon,75,MID,Newcastle,NEW
+381,14,3,McTominay,Scott,McTominay,50,MID,Man Utd,MUN
+348,13,3,Foden,Phil,Foden,95,MID,Man City,MCI
+351,13,4,Haaland,Erling,Haaland,150,FWD,Man City,MCI
+129,5,4,João Pedro,João Pedro,Junqueira de Jesus,55,FWD,Brighton,BHA
+58,2,4,Watkins,Ollie,Watkins,90,FWD,Aston Villa,AVL
+39,2,1,Gauci,Joe,Gauci,40,GKP,Aston Villa,AVL
+68,3,2,Hill,James,Hill,40,DEF,Bournemouth,BOU
+558,20,2,Mosquera,Yerson,Mosquera,40,DEF,Wolves,WOL
+111,4,3,Yarmoliuk,Yehor,Yarmoliuk,45,MID,Brentford,BRE
