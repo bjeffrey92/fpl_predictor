@@ -56,6 +56,7 @@ def get_player_data() -> pl.DataFrame:
     return df.join(team_data_df, on="team_id")
 
 
+@cache
 def get_fixtures() -> list[dict]:
     data = cast(list[dict], get("https://fantasy.premierleague.com/api/fixtures/"))
     return data

@@ -5,6 +5,8 @@ from typing import Literal, NamedTuple
 import boto3
 import polars as pl
 
+from fpl_predictor.model_training.position_encoder import position_encoder
+
 
 class TrainTestValData(NamedTuple):
     train_X: pl.DataFrame
@@ -140,6 +142,62 @@ def _train_test_val_split(data: pl.DataFrame, test_frac: float, val_frac: float)
     )
 
 
+def _append_position_encodings(
+    data: pl.DataFrame, gw_stats: pl.DataFrame
+) -> pl.DataFrame:
+    position_encoder_ = position_encoder()
+    encoded_positions = position_encoder_.transform(gw_stats.select("position"))
+    encoded_positions_df = pl.DataFrame(encoded_positions)
+    encoded_positions_df.columns = position_encoder_.categories_[0]
+    encoded_positions_df = pl.concat(
+        [gw_stats.select("player_id", "gameweek"), encoded_positions_df],
+        how="horizontal",
+    )
+    return data.join(
+        encoded_positions_df,
+        left_on=["player_id", "prediction_gw"],
+        right_on=["player_id", "gameweek"],
+    )
+
+
+def _gw_team_stats(gw_fixture_stats: dict[str, object]) -> pl.DataFrame:
+    gw_fixture_stats_df = pl.DataFrame(
+        {k: v for k, v in gw_fixture_stats.items() if k.startswith("team_")}
+    )
+    home_team = gw_fixture_stats_df.select(
+        [i for i in gw_fixture_stats_df.columns if i.startswith("team_h")]
+    )
+    away_team = gw_fixture_stats_df.select(
+        [i for i in gw_fixture_stats_df.columns if i.startswith("team_a")]
+    )
+    return pl.DataFrame(
+        {
+            "team_id": [home_team["team_h"].item(), away_team["team_a"].item()],
+            "team_difficulty": [
+                home_team["team_h_difficulty"].item(),
+                away_team["team_a_difficulty"].item(),
+            ],
+            "home_team": [True, False],
+            "opposition_team_difficulty": [
+                away_team["team_a_difficulty"].item(),
+                home_team["team_h_difficulty"].item(),
+            ],
+            "gameweek": [gw_fixture_stats["event"]] * 2,
+        }
+    )
+
+
+def _append_prediction_gameweek_team_stats(
+    data: pl.DataFrame, fixtures: list[dict[str, object]]
+) -> pl.DataFrame:
+    df = pl.concat(
+        [_gw_team_stats(f) for f in fixtures],
+    )
+    return data.join(
+        df, left_on=["team_id", "prediction_gw"], right_on=["team_id", "gameweek"]
+    ).drop("gameweek")
+
+
 def load_data(
     n_prediction_weeks: int, test_frac: float = 0.2, val_frac: float = 0.2
 ) -> TrainTestValData:
@@ -182,4 +240,10 @@ def load_data(
         n += n_prediction_weeks + 1
 
     data = pl.concat(all_data)
-    return _train_test_val_split(data, test_frac, val_frac)
+    data_with_prediction_gw_team_stats = _append_prediction_gameweek_team_stats(
+        data, fixtures
+    )
+    data_with_positions = _append_position_encodings(
+        data_with_prediction_gw_team_stats, gw_stats
+    )
+    return _train_test_val_split(data_with_positions, test_frac, val_frac)
