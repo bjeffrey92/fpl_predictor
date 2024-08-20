@@ -5,6 +5,7 @@ import joblib
 import polars as pl
 import s3fs
 
+from fpl_predictor.model_training.position_encoder import position_encoder
 from fpl_predictor.model_training.xgboost import XGBoostPredictor
 from fpl_predictor.player_stats import (
     get_fixtures,
@@ -99,6 +100,52 @@ def _process_home_away_teams(gw_fixture_stats: dict[str, object]) -> pl.DataFram
     )
 
 
+def _append_position_encodings(player_data: pl.DataFrame) -> pl.DataFrame:
+    position_encoder_ = position_encoder()
+    encoded_positions = position_encoder_.transform(player_data.select("position"))
+    encoded_positions_df = pl.DataFrame(encoded_positions)
+    encoded_positions_df.columns = position_encoder_.categories_[0]
+    return pl.concat(
+        [player_data.select("player_id", "team_id"), encoded_positions_df],
+        how="horizontal",
+    )
+
+
+def _append_prediction_gameweek_team_stats(
+    data: pl.DataFrame, prediction_gameweek: int
+) -> pl.DataFrame:
+    team_cols = ["team_a", "team_h", "team_a_difficulty", "team_h_difficulty"]
+    fixtures = [
+        {k: v for k, v in i.items() if k in team_cols}
+        for i in get_fixtures()
+        if i["event"] == prediction_gameweek
+    ]
+    fixtures_df = pl.DataFrame(fixtures)
+    df1 = (
+        fixtures_df.select("team_h", "team_h_difficulty", "team_a_difficulty")
+        .rename(
+            {
+                "team_h": "team_id",
+                "team_h_difficulty": "team_difficulty",
+                "team_a_difficulty": "opposition_team_difficulty",
+            }
+        )
+        .with_columns(pl.Series("home_team", [True] * 10))
+    )
+    df2 = (
+        fixtures_df.select("team_a", "team_a_difficulty", "team_h_difficulty")
+        .rename(
+            {
+                "team_a": "team_id",
+                "team_a_difficulty": "team_difficulty",
+                "team_h_difficulty": "opposition_team_difficulty",
+            }
+        )
+        .with_columns(pl.Series("home_team", [False] * 10))
+    )
+    return data.join(pl.concat((df1, df2)), on="team_id").drop("team_id")
+
+
 class XGBoost(_BasePrediction):
     _bucket = "fpl-prediction-models"
     _key_pattern = "xgboost/xgboost_{}_prediction_week.joblib"
@@ -137,17 +184,23 @@ class XGBoost(_BasePrediction):
             )
             for i in range(1, self.n_prediction_weeks + 1)
         }
-        player_data = get_player_data().select("player_id", "team_id")
+        player_data = _append_position_encodings(get_player_data())
         gw_player_stats = {
             k: v.join(player_data, on="player_id") for k, v in gw_player_stats.items()
         }
         gw_fixture_stats = self._load_fixture_data()
         all_stats = {
-            k: v.join(gw_fixture_stats[k], on="team_id").drop("team_id")
+            k: v.join(gw_fixture_stats[k], on="team_id")
             for k, v in gw_player_stats.items()
         }
         all_stats_with_gw = [
-            v.rename({i: f"{k}_{i}" for i in v.columns if i != "player_id"})
+            v.rename(
+                {
+                    i: f"{k}_{i}"
+                    for i in v.columns
+                    if i not in ["player_id", "team_id", "GKP", "DEF", "MID", "FWD"]
+                }
+            )
             for k, v in all_stats.items()
         ]
         if len(all_stats_with_gw) < 1:
@@ -156,7 +209,7 @@ class XGBoost(_BasePrediction):
             )
         else:
             all_stats_df = all_stats_with_gw[0]
-        return all_stats_df
+        return _append_prediction_gameweek_team_stats(all_stats_df, self.gameweek)
 
     def _load_fixture_data(self) -> dict[str, pl.DataFrame]:
         all_fixtures = get_fixtures()
