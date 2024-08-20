@@ -122,11 +122,11 @@ class XGBoost(_BasePrediction):
         "player_id",
     )
 
-    def __init__(self, n_prediction_weeks: int, gameweek: int) -> None:
-        if gameweek - n_prediction_weeks < 1:
+    def __init__(self, upcoming_gameweek: int, n_prediction_weeks: int) -> None:
+        if upcoming_gameweek - n_prediction_weeks < 1:
             raise ValueError("Not enough data to predict gameweek scores")
         self.n_prediction_weeks = n_prediction_weeks
-        self.gameweek = gameweek
+        self.gameweek = upcoming_gameweek
         self.data = self._load_data()
         self.model = self._load_model()
 

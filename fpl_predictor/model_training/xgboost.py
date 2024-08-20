@@ -69,15 +69,16 @@ def optimise_hyperparameters(
 @dataclass
 class XGBoostPredictor:
     model: xgb.XGBRegressor
-    prediction_columns: tuple[str]
+    prediction_columns: tuple[str, ...]
 
 
 def main(  # pragma: no cover
     n_prediction_weeks: int = 2,
     load_data: Callable[[int], TrainTestValData] = load_23_24_data,
-) -> tuple[float, xgb.XGBRegressor]:
+) -> tuple[float, XGBoostPredictor]:
     data = load_data(n_prediction_weeks)
     model = optimise_hyperparameters(data.train_X, data.train_y, data.val_X, data.val_y)
     test_preds = model.predict(data.test_X)
     mse = mean_squared_error(data.test_y, test_preds)
-    return mse, model
+    trained_model = XGBoostPredictor(model, tuple(data.train_X.columns))
+    return mse, trained_model
