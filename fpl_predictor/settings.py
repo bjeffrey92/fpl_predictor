@@ -4,7 +4,7 @@ SQUAD_SELECTION_METHOD = config(
     "SQUAD_SELECTION_METHOD", default="preselect_cheapest_players"
 )
 supported_squad_selection_methods = ("preselect_cheapest_players", "naive")
-if SQUAD_SELECTION_METHOD not in supported_squad_selection_methods:
+if SQUAD_SELECTION_METHOD not in supported_squad_selection_methods:  # pragma: no cover
     raise ValueError(
         f"Invalid squad selection method, must be one of {supported_squad_selection_methods}"
     )

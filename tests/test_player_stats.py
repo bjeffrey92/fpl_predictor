@@ -4,6 +4,7 @@ import polars as pl
 from polars.datatypes import Float64, Int64, Utf8
 
 from fpl_predictor.player_stats import (
+    get_fixtures,
     get_player_data,
     get_player_gameweek_stats,
     load_player_gameweek_data,
@@ -75,6 +76,13 @@ def test_get_player_data() -> None:
         assert player_data["name"].to_list() == ["Player 1", "Player 2"]
         assert player_data["cost_times_ten"].to_list() == [50, 60]
         assert player_data["position"].to_list() == ["GKP", "DEF"]
+
+
+def test_get_fixtures() -> None:
+    get_fixtures.cache_clear()
+    with patch("fpl_predictor.player_stats.get") as mock_get:
+        response = get_fixtures()
+        assert response == mock_get.return_value
 
 
 def test_load_player_gameweek_data() -> None:
