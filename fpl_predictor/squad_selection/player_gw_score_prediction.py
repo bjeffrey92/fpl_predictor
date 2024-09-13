@@ -14,58 +14,6 @@ from fpl_predictor.player_stats import (
 )
 
 
-class _BasePrediction(ABC):
-    @abstractmethod
-    def predict_gw_scores(self) -> pl.DataFrame:
-        pass
-
-
-class MedianPastScore(_BasePrediction):
-    def __init__(
-        self,
-        upcoming_gameweek: int,
-        n_previous_weeks: int = 5,
-        min_required_weeks: int = 3,
-    ) -> None:
-        """
-        Predicts player gameweek points as the median gameweek points recorded in past
-        weeks.
-
-        Args:
-            upcoming_gameweek (int): Which gameweek to predict?
-            n_previous_weeks (int): How many previous gameweeks to consider?
-            min_required_weeks (int): How many weeks must a player have participated in
-                to be considered?
-        """
-        self.upcoming_gameweek = upcoming_gameweek
-        self.n_previous_weeks = n_previous_weeks
-        self.min_required_weeks = min_required_weeks
-
-        self.data = self._get_data()
-
-    def _get_data(self) -> pl.DataFrame:
-        df = pl.concat(
-            [
-                get_player_gameweek_stats(
-                    i, cols=["player_id", "gameweek", "gameweek_points"]
-                ).drop("gameweek")
-                for i in range(
-                    self.upcoming_gameweek - self.n_previous_weeks,
-                    self.upcoming_gameweek,
-                )
-            ]
-        )
-        players_to_consider = (
-            df["player_id"]
-            .value_counts()
-            .filter(pl.col("count") > self.min_required_weeks)["player_id"]
-        )
-        return df.filter(pl.col("player_id").is_in(players_to_consider))
-
-    def predict_gw_scores(self) -> pl.DataFrame:
-        return self.data.group_by("player_id").median()
-
-
 def _process_home_away_teams(gw_fixture_stats: dict[str, object]) -> pl.DataFrame:
     gw_fixture_stats_df = pl.DataFrame(
         {k: v for k, v in gw_fixture_stats.items() if k.startswith("team_")}
@@ -146,6 +94,58 @@ def _append_prediction_gameweek_team_stats(
     return data.join(pl.concat((df1, df2)), on="team_id").drop("team_id")
 
 
+class _BasePrediction(ABC):
+    @abstractmethod
+    def predict_gw_scores(self) -> pl.DataFrame:  # pragma: no cover
+        pass
+
+
+class MedianPastScore(_BasePrediction):
+    def __init__(
+        self,
+        upcoming_gameweek: int,
+        n_previous_weeks: int = 5,
+        min_required_weeks: int = 3,
+    ) -> None:
+        """
+        Predicts player gameweek points as the median gameweek points recorded in past
+        weeks.
+
+        Args:
+            upcoming_gameweek (int): Which gameweek to predict?
+            n_previous_weeks (int): How many previous gameweeks to consider?
+            min_required_weeks (int): How many weeks must a player have participated in
+                to be considered?
+        """
+        self.upcoming_gameweek = upcoming_gameweek
+        self.n_previous_weeks = n_previous_weeks
+        self.min_required_weeks = min_required_weeks
+
+        self.data = self._get_data()
+
+    def _get_data(self) -> pl.DataFrame:
+        df = pl.concat(
+            [
+                get_player_gameweek_stats(
+                    i, cols=["player_id", "gameweek", "gameweek_points"]
+                ).drop("gameweek")
+                for i in range(
+                    self.upcoming_gameweek - self.n_previous_weeks,
+                    self.upcoming_gameweek,
+                )
+            ]
+        )
+        players_to_consider = (
+            df["player_id"]
+            .value_counts()
+            .filter(pl.col("count") > self.min_required_weeks)["player_id"]
+        )
+        return df.filter(pl.col("player_id").is_in(players_to_consider))
+
+    def predict_gw_scores(self) -> pl.DataFrame:
+        return self.data.group_by("player_id").median()
+
+
 class XGBoost(_BasePrediction):
     _bucket = "fpl-prediction-models"
     _key_pattern = "xgboost/xgboost_{}_prediction_week.joblib"
@@ -170,7 +170,7 @@ class XGBoost(_BasePrediction):
     )
 
     def __init__(self, upcoming_gameweek: int, n_prediction_weeks: int) -> None:
-        if upcoming_gameweek - n_prediction_weeks < 1:
+        if upcoming_gameweek - n_prediction_weeks < 1:  # pragma: no cover
             raise ValueError("Not enough data to predict gameweek scores")
         self.n_prediction_weeks = n_prediction_weeks
         self.gameweek = upcoming_gameweek
@@ -217,7 +217,9 @@ class XGBoost(_BasePrediction):
             f"gw_-{i}": [x for x in all_fixtures if x["event"] == self.gameweek - i]
             for i in range(1, self.n_prediction_weeks + 1)
         }
-        if not all([[i["finished"] for i in v] for v in relevant_fixtures.values()]):
+        if not all(
+            [all([i["finished"] for i in v]) for v in relevant_fixtures.values()]
+        ):
             raise ValueError("Not all relevant fixtures have finished")
         return {
             k: pl.concat([_process_home_away_teams(i) for i in v])
