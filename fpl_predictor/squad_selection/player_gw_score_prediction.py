@@ -203,9 +203,9 @@ class XGBoost(_BasePrediction):
             )
             for k, v in all_stats.items()
         ]
-        if len(all_stats_with_gw) < 1:
+        if len(all_stats_with_gw) > 1:
             all_stats_df = reduce(
-                lambda x, y: x.join(y, on="player_id"), all_stats.values()
+                lambda x, y: x.join(y, on="player_id"), all_stats_with_gw
             )
         else:
             all_stats_df = all_stats_with_gw[0]
