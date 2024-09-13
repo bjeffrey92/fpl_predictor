@@ -39,7 +39,7 @@ python-decouple = "^3.8"
 requests = "^2.32.2"
 s3fs = "^2022.1.0"
 scikit-learn = "^1.5.0"
-scipy = "^1.14.0"
+scipy = "^1.14.1"
 xgboost = "^2.1.0"
 
 [tool.poetry.group.dev.dependencies]
