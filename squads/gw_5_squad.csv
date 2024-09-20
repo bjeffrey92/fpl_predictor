@@ -1,0 +1,16 @@
+player_id,team_id,position,cost,gameweek_points,starting,player_annotation,name,team,position_right
+17,1,MID,10.0,4.0594406,true,"",Saka,Arsenal,MID
+18,1,DEF,6.0,1.6195735,true,"",Saliba,Arsenal,DEF
+24,1,DEF,6.5,1.2039425,false,"",White,Arsenal,DEF
+39,2,GKP,4.0,0.15787692,true,"",Gauci,Aston Villa,GKP
+111,4,MID,4.5,0.50904864,false,"",Yarmoliuk,Brentford,MID
+129,5,FWD,5.7,2.7012339,true,"",João Pedro,Brighton,FWD
+207,7,FWD,7.4,4.5460205,true,"",Mateta,Crystal Palace,FWD
+239,9,MID,5.0,5.14476,true,captain,Adama,Fulham,MID
+317,12,MID,7.6000000000000005,3.321513,true,"",Diogo J.,Liverpool,MID
+351,13,FWD,15.200000000000001,4.429196,true,"",Haaland,Man City,FWD
+361,13,DEF,5.5,1.7955897,true,"",Rúben,Man City,DEF
+398,15,MID,7.4,4.62619,true,vice_captain,Gordon,Newcastle,MID
+516,19,DEF,4.5,1.1909715,false,"",Coufal,West Ham,DEF
+554,20,GKP,4.5,-0.012272525,false,"",José Sá,Wolves,GKP
+558,20,DEF,4.0,1.8170358,true,"",Mosquera,Wolves,DEF
